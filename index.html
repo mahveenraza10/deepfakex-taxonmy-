@@ -1,1 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deepfake Forensic Signal Taxonomy — Mahveen Raza</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text: #f0ede8;
+      --text-muted: #888;
+      --text-faint: #444;
+      --blue: #378ADD;
+      --blue-light: #E6F1FB;
+      --teal: #1D9E75;
+      --teal-light: #E1F5EE;
+      --amber: #BA7517;
+      --amber-light: #FAEEDA;
+      --pink: #D4537E;
+      --pink-light: #FBEAF0;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+    }
+    .nav-brand {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .nav-brand strong { color: var(--text); font-weight: 500; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 5rem 2rem 3rem;
+    }
+    .hero-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 400;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--text-muted);
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 1px solid var(--border-hover);
+      border-radius: 99px;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+    .badge.accent { border-color: rgba(55,138,221,0.4); color: #6ab3f5; }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── CATEGORY GRID ── */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 600px) { .cat-grid { grid-template-columns: 1fr 1fr; } }
+
+    .cat-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+      color: var(--text);
+    }
+    .cat-btn:hover { border-color: var(--border-hover); background: var(--surface2); }
+    .cat-btn.active { background: var(--surface2); }
+
+    .cat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-icon svg { width: 14px; height: 14px; }
+    .cat-name { font-size: 12px; font-weight: 500; color: var(--text); display: block; margin-bottom: 2px; }
+    .cat-sub { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 10px; }
+
+    .rob-row { display: flex; align-items: center; gap: 8px; }
+    .rob-bar { flex: 1; height: 2px; background: var(--border); border-radius: 99px; }
+    .rob-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+    .rob-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint); white-space: nowrap; }
+
+    /* ── DETAIL PANEL ── */
+    .detail-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .panel-header-left h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .panel-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .panel-meta-item {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-faint);
+      letter-spacing: 0.04em;
+    }
+    .panel-meta-item span { color: var(--text-muted); }
+    .rob-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      padding: 48px 18px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-faint);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── SIGNALS ── */
+    .signal-row {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .signal-row:last-child { border-bottom: none; }
+    .signal-row:hover { background: var(--surface2); }
+    .signal-row.open { background: var(--surface2); }
+
+    .signal-top {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .signal-top-left { display: flex; align-items: center; gap: 10px; }
+    .signal-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-faint);
+      width: 18px;
+      flex-shrink: 0;
+    }
+    .signal-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .signal-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .signal-chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--text-faint);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .signal-chevron.open { transform: rotate(45deg); }
+
+    .signal-body {
+      display: none;
+      padding: 0 18px 16px 46px;
+    }
+    .signal-body.open { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .signal-body.open { grid-template-columns: 1fr; } }
+
+    .sig-cell {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+    .sig-cell-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 6px;
+    }
+    .sig-cell-val { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── CONTEXT SECTION ── */
+    .context-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 3rem;
+    }
+    @media (max-width: 600px) { .context-grid { grid-template-columns: 1fr; } }
+
+    .context-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+    .context-card h4 {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 10px;
+    }
+    .context-card p { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+    }
+    footer p { font-size: 12px; color: var(--text-faint); }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><strong>Mahveen Raza</strong> &nbsp;/&nbsp; deepfake forensics</div>
+  <div class="nav-links">
+    <a href="https://mahveenraza.github.io" target="_blank">Portfolio</a>
+    <a href="https://scholar.google.com/citations?user=Wb2KOooAAAAJ" target="_blank">Google Scholar</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-label">Research · ICML 2026 Muslims in ML Workshop</div>
+  <h1>Content-level forensic signals <em>in deepfake video detection</em></h1>
+  <p class="hero-desc">
+    A principled taxonomy of observable artifacts that arise from imperfections in generative models,
+    organized by the pipeline failure mode each signal exploits.
+  </p>
+  <div class="hero-meta">
+    <span class="badge accent">ICML 2026 Submission</span>
+    <span class="badge">4 signal categories</span>
+    <span class="badge">13 signals</span>
+    <span class="badge">Mahveen Raza · HWDSB</span>
+  </div>
+</div>
+
+<main>
+
+  <div class="section-label">Taxonomy explorer — click a category, then click a signal</div>
+
+  <div class="cat-grid" id="catGrid"></div>
+
+  <div class="detail-panel" id="detailPanel">
+    <div class="empty-state">select a category above to explore its signals</div>
+  </div>
+
+  <div class="section-label">Research context</div>
+
+  <div class="context-grid">
+    <div class="context-card">
+      <h4>The problem</h4>
+      <p>
+        Dominant deepfake detection methods rely on extrinsic signals — provenance metadata,
+        cryptographic hashes, model fingerprints. These are brittle: a re-encoded or
+        unwatermarked video evades them entirely. They depend on the closed-world assumption
+        that authentic content is pre-certified at source.
+      </p>
+    </div>
+    <div class="context-card">
+      <h4>The argument</h4>
+      <p>
+        Content-level signals exploit generative pipeline failure modes — constraints that
+        models cannot easily satisfy because they require simulating physics, biology, or
+        cross-modal coherence. These signals are intrinsic to the video content itself,
+        making them more durable as generative models advance.
+      </p>
+    </div>
+    <div class="context-card">
+      <h4>Robustness insight</h4>
+      <p>
+        Spatial artifacts are being rapidly eliminated by diffusion-based models.
+        Physiological signals — rPPG, pupillary response, respiration — require simulating
+        biology and remain the most robust category. The field's detection capacity is
+        eroding fastest exactly where it is most invested.
+      </p>
+    </div>
+    <div class="context-card">
+      <h4>Scope</h4>
+      <p>
+        This taxonomy is scoped to video deepfakes and content-level signals only,
+        excluding audio-only deepfakes, text-based manipulation, and extrinsic detection
+        methods. Real-time synthesis in video calls is identified as the key frontier for 2026.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    Mahveen Raza · Grade 10, HWDSB Hamilton ·
+    <a href="https://scholar.google.com/citations?user=Wb2KOooAAAAJ" target="_blank">Google Scholar</a> ·
+    <a href="https://mahveenraza.github.io" target="_blank">Portfolio</a>
+  </p>
+</footer>
+
+<script>
+const cats = [
+  {
+    id: "spatial",
+    name: "Spatial & geometric",
+    sub: "Frame-level warping artifacts",
+    color: "#378ADD",
+    bgColor: "rgba(55,138,221,0.12)",
+    robustness: 0.28,
+    robLabel: "Decreasing",
+    failureOrigin: "2D affine warping cannot enforce 3D physical consistency",
+    detectionScope: "Single frame",
+    signals: [
+      {
+        name: "Boundary artifacts",
+        tag: "Geometric",
+        obs: "Misalignment at jawline, ears, and hairline — a visible stitching seam where the synthetic face meets the original head.",
+        cause: "The AI generates a face in a fixed square (e.g. 256×256), then affine warping stretches it onto a moving target, creating interpolation errors at the seam boundary.",
+        implication: "Detectable by single-frame CNNs trained on edge discontinuities. Newer diffusion models blend boundaries more smoothly, reducing signal reliability."
+      },
+      {
+        name: "Dermal uniformity",
+        tag: "Texture",
+        obs: "Plastic or unnaturally smooth skin; blurry eyelashes; teeth rendered as a single undifferentiated white block.",
+        cause: "GANs fail to reproduce high-frequency biological texture such as pores, fine hairs, and natural skin irregularity — a known spectral distribution problem.",
+        implication: "Frequency-domain classifiers can isolate high-frequency texture absence. Increasingly bypassed by diffusion-based models with improved texture synthesis."
+      },
+      {
+        name: "Illumination mismatch",
+        tag: "Shading",
+        obs: "Eye specular highlights don't match room lighting direction; nose shadow doesn't align with the shadow on the neck.",
+        cause: "Face synthesis operates in 2D and does not enforce 3D illumination consistency. Shading is approximated per-face without global scene awareness.",
+        implication: "Intrinsic image decomposition methods can isolate shading inconsistencies. Computationally expensive; works best on high-quality, uncompressed video."
+      },
+      {
+        name: "Semantic inconsistency",
+        tag: "Content",
+        obs: "Jewellery disappears or changes shape mid-video; background text becomes corrupted gibberish.",
+        cause: "The model understands pixels but not semantic objects. It modifies regions near the face without understanding what objects like text or jewellery are.",
+        implication: "Object-persistence tracking across frames; requires scene-level understanding rather than face-only analysis. An underexplored detection direction."
+      }
+    ]
+  },
+  {
+    id: "temporal",
+    name: "Temporal",
+    sub: "Inter-frame continuity failures",
+    color: "#1D9E75",
+    bgColor: "rgba(29,158,117,0.12)",
+    robustness: 0.5,
+    robLabel: "Moderate",
+    failureOrigin: "Frame-by-frame synthesis ignores biological inter-frame continuity",
+    detectionScope: "Multi-frame sequence",
+    signals: [
+      {
+        name: "Blink frequency",
+        tag: "Ocular",
+        obs: "Subject doesn't blink for 20+ seconds; eyelid begins to close then teleports back to open without completing the motion.",
+        cause: "Early training datasets favoured open-eye photos — models learned faces without learning the natural blink cycle, its duration, or frequency distribution.",
+        implication: "LSTM or attention-based sequence models applied to eye-region crops. A robust signal but increasingly addressed by newer generators trained on video data."
+      },
+      {
+        name: "Colour flickering",
+        tag: "Skin tone",
+        obs: "Rapid skin-tone or brightness changes lasting only 1–2 frames; a shimmering effect on cheeks or forehead.",
+        cause: "Independent per-frame synthesis means colour normalisation is not enforced temporally — each frame is slightly differently colour-balanced.",
+        implication: "Temporal difference maps between adjacent frames. Sensitive to video compression artefacts, which can mask or mimic the signal."
+      },
+      {
+        name: "Geometric flooding",
+        tag: "Motion",
+        obs: "Facial features appear to slide or drift during fast head movement rather than moving rigidly with the head.",
+        cause: "Affine warping cannot perfectly track 3D head pose. When motion exceeds the training distribution, facial features drift relative to the skull.",
+        implication: "Optical flow analysis combined with facial landmark tracking. Effective but computationally intensive; may require high frame-rate video."
+      }
+    ]
+  },
+  {
+    id: "physio",
+    name: "Physiological",
+    sub: "Biological simulation failures",
+    color: "#BA7517",
+    bgColor: "rgba(186,117,23,0.12)",
+    robustness: 0.85,
+    robLabel: "High",
+    failureOrigin: "No simulation of autonomous nervous system responses",
+    detectionScope: "Extended sequence (seconds to minutes)",
+    signals: [
+      {
+        name: "rPPG biological pulse",
+        tag: "Cardiovascular",
+        obs: "Absence of subtle periodic skin-colour oscillations driven by blood pulsing beneath facial tissue — imperceptible to the naked eye but detectable algorithmically.",
+        cause: "Generative models have no mechanism to simulate cardiovascular-driven changes in skin reflectance. The signal requires modelling blood flow physics, not pixel patterns.",
+        implication: "Remote photoplethysmography extraction. Highly robust — requires simulating physiology, not just convincing pixels. The most durable signal class in this taxonomy."
+      },
+      {
+        name: "Pupillary response",
+        tag: "Ocular",
+        obs: "Pupils remain fixed in size as subject moves from dark to bright environment; irregular or non-circular pupil shapes.",
+        cause: "Models render eyes as static texture without modelling the pupillary light reflex driven by the autonomic nervous system. GANs also produce geometrically irregular irises.",
+        implication: "Iris tracking under varying scene luminance. GAN-generated faces show irregular pupil shapes even in still images — detectable by shape analysis alone."
+      },
+      {
+        name: "Inconsistent respiration",
+        tag: "Breathing",
+        obs: "Absence of natural breathing sounds coordinated with visible chest and shoulder movement during speech; no respiratory rhythm.",
+        cause: "TTS and face-swapping pipelines are designed independently and do not model the respiratory integration inherent in human speech production.",
+        implication: "Requires cross-modal analysis combining audio breath detection with visual thorax motion tracking. An underexplored direction with high potential robustness."
+      }
+    ]
+  },
+  {
+    id: "crossmodal",
+    name: "Cross-modal",
+    sub: "Audio-visual pipeline mismatch",
+    color: "#D4537E",
+    bgColor: "rgba(212,83,126,0.12)",
+    robustness: 0.55,
+    robLabel: "Moderate",
+    failureOrigin: "Audio and visual streams synthesised by independent pipelines",
+    detectionScope: "Multi-frame, multi-stream",
+    signals: [
+      {
+        name: "Lip-sync mismatch",
+        tag: "Audio-visual",
+        obs: "Mouth movements do not accurately correspond to the phonemes being produced; coarse timing offset between speech and lip motion.",
+        cause: "Audio and video generation pipelines are trained separately. Synchronisation is approximate rather than biologically grounded in articulatory mechanics.",
+        implication: "Contrastive audio-visual models (SyncNet-based approaches). Currently the most widely deployed cross-modal detector in production systems."
+      },
+      {
+        name: "Phoneme-viseme inconsistency",
+        tag: "Articulatory",
+        obs: "Fine-grained mouth shape (viseme) does not match the expected shape for the specific phoneme being produced, even when gross lip-sync timing is correct.",
+        cause: "Generative models approximate lip shape at the word level but do not enforce sub-phoneme articulatory precision — a finer-grained version of the lip-sync problem.",
+        implication: "Requires viseme-level analysis beyond coarse lip-sync. More discriminative and harder to defeat than gross timing checks. An active research frontier."
+      },
+      {
+        name: "Expression-audio disagreement",
+        tag: "Affective",
+        obs: "Facial expression conveys a different emotional valence from the tone or semantic content of the speech — e.g. neutral face over distressed speech.",
+        cause: "Emotional content in audio and facial animation are optimised by separate objectives with no shared affective constraint enforcing coherence.",
+        implication: "Multimodal sentiment alignment models. Relatively underexplored in the literature — a promising and robust future research direction."
+      }
+    ]
+  }
+];
+
+let activeId = null;
+let openSig = null;
+
+function renderCats() {
+  const grid = document.getElementById("catGrid");
+  grid.innerHTML = cats.map(c => `
+    <button class="cat-btn${activeId === c.id ? ' active' : ''}"
+      onclick="selectCat('${c.id}')"
+      style="${activeId === c.id ? `border-color:${c.color};` : ''}">
+      <div class="cat-icon" style="background:${c.bgColor};">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="7" cy="7" r="5" stroke="${c.color}" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <span class="cat-name">${c.name}</span>
+      <span class="cat-sub">${c.signals.length} signals</span>
+      <div class="rob-row">
+        <div class="rob-bar">
+          <div class="rob-fill" style="width:${Math.round(c.robustness*100)}%;background:${c.color};"></div>
+        </div>
+        <span class="rob-label">${c.robLabel}</span>
+      </div>
+    </button>
+  `).join('');
+}
+
+function robBadgeStyle(cat) {
+  const map = {
+    "Decreasing": "background:rgba(228,75,74,0.12);color:#e44b4a;border:1px solid rgba(228,75,74,0.25);",
+    "Moderate": "background:rgba(186,117,23,0.12);color:#BA7517;border:1px solid rgba(186,117,23,0.25);",
+    "High": "background:rgba(29,158,117,0.12);color:#1D9E75;border:1px solid rgba(29,158,117,0.25);"
+  };
+  return map[cat.robLabel] || '';
+}
+
+function renderPanel(cat) {
+  const panel = document.getElementById("detailPanel");
+  panel.innerHTML = `
+    <div class="panel-header" style="border-left:3px solid ${cat.color};">
+      <div class="panel-header-left">
+        <h3>${cat.name}</h3>
+        <div class="panel-meta">
+          <div class="panel-meta-item">FAILURE &nbsp;<span>${cat.failureOrigin}</span></div>
+          <div class="panel-meta-item">SCOPE &nbsp;<span>${cat.detectionScope}</span></div>
+        </div>
+      </div>
+      <div class="rob-badge" style="${robBadgeStyle(cat)}">
+        ${cat.robLabel}
+      </div>
+    </div>
+    <div class="signal-list">
+      ${cat.signals.map((s,i) => `
+        <div class="signal-row" id="sr${i}" onclick="toggleSig(${i})">
+          <div class="signal-top">
+            <div class="signal-top-left">
+              <span class="signal-num">0${i+1}</span>
+              <span class="signal-name">${s.name}</span>
+              <span class="signal-tag">${s.tag}</span>
+            </div>
+            <svg class="signal-chevron" id="sc${i}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="signal-body" id="sb${i}">
+            <div class="sig-cell">
+              <div class="sig-cell-label">Observation</div>
+              <div class="sig-cell-val">${s.obs}</div>
+            </div>
+            <div class="sig-cell">
+              <div class="sig-cell-label">Root cause</div>
+              <div class="sig-cell-val">${s.cause}</div>
+            </div>
+            <div class="sig-cell">
+              <div class="sig-cell-label">Detection implication</div>
+              <div class="sig-cell-val">${s.implication}</div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  openSig = null;
+}
+
+function selectCat(id) {
+  activeId = id;
+  openSig = null;
+  renderCats();
+  renderPanel(cats.find(c => c.id === id));
+}
+
+function toggleSig(i) {
+  const body = document.getElementById(`sb${i}`);
+  const chevron = document.getElementById(`sc${i}`);
+  const row = document.getElementById(`sr${i}`);
+  if (openSig === i) {
+    body.classList.remove('open');
+    chevron.classList.remove('open');
+    row.classList.remove('open');
+    openSig = null;
+  } else {
+    if (openSig !== null) {
+      document.getElementById(`sb${openSig}`).classList.remove('open');
+      document.getElementById(`sc${openSig}`).classList.remove('open');
+      document.getElementById(`sr${openSig}`).classList.remove('open');
+    }
+    body.classList.add('open');
+    chevron.classList.add('open');
+    row.classList.add('open');
+    openSig = i;
+  }
+}
+
+renderCats();
+</script>
+</body>
+</html>
